@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestione Laboratori</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://cspace.spaggiari.eu//pub/VAII0010/favicon.ico" rel="icon">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+</head>
+<body>
+    <h1 class="text-center h1">KeyApp OpenDay</h1>
+
+    <div class="modal fade" id="modal" tabindex="-1" aria-labelledby="modalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="modalLabel">Dettagli Laboratorio</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="modal-body"></div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" data-bs-dismiss="modal" onclick="occupyLab(currentLab)">OCCUPA</button>
+                    <button type="button" class="btn btn-success" data-bs-dismiss="modal" onclick="releaseLab(currentLab)">LIBERA</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="accordion" id="accordionExample">
+        <div class="accordion-item">
+            <h2 class="accordion-header">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                    Primo Piano
+                </button>
+            </h2>
+            <div id="collapseTwo" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
+                <div class="accordion-body">
+                    <div id="lab-list" class="d-flex flex-column align-items-center list-unstyled"></div>
+                </div>
+            </div>
+        </div>
+        <div class="accordion-item">
+            <h2 class="accordion-header">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseTwo">
+                    Secondo Piano
+                </button>
+            </h2>
+            <div id="collapseThree" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
+                <div class="accordion-body">
+                    <div id="lab-list1" class="d-flex flex-column align-items-center list-unstyled"></div>
+                </div>
+            </div>
+        </div>
+        <div class="accordion-item">
+            <h2 class="accordion-header">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFour" aria-expanded="false" aria-controls="collapseThree">
+                    Terzo Piano
+                </button>
+            </h2>
+            <div id="collapseFour" class="accordion-collapse collapse" data-bs-parent="#accordionExample">
+                <div class="accordion-body">
+                    <div id="lab-list2" class="d-flex flex-column align-items-center list-unstyled"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const socket = io();
+        let currentLab;
+
+        function loadLabs() {
+            fetch('/api/labs')
+                .then(response => response.json())
+                .then(labs => {
+                    const labList = document.getElementById('lab-list');
+                    labList.innerHTML = '';
+                    for (let i = 0; i <= 2; i++) {
+                        let btn = document.createElement('button');
+                        btn.textContent = `${labs[i].nome.toUpperCase()}`;
+                        btn.className = `btn ${labs[i].stato ? 'btn-danger' : 'btn-outline-primary'}`;
+                        btn.onclick = () => showModal(labs[i]);
+                        labList.appendChild(btn);
+                    }
+                    const labList1 = document.getElementById('lab-list1');
+                    labList1.innerHTML = '';
+                    for (let i = 3; i <= 6; i++) {
+                        let btn = document.createElement('button');
+                        btn.textContent = `${labs[i].nome.toUpperCase()}`;
+                        btn.className = `btn ${labs[i].stato ? 'btn-danger' : 'btn-outline-primary'}`;
+                        btn.onclick = () => showModal(labs[i]);
+                        labList1.appendChild(btn);
+                    }
+                    const labList2 = document.getElementById('lab-list2');
+                    labList2.innerHTML = '';
+                    for (let i = 7; i < 11; i++) {
+                        let btn = document.createElement('button');
+                        btn.textContent = `${labs[i].nome.toUpperCase()}`;
+                        btn.className = `btn ${labs[i].stato ? 'btn-danger' : 'btn-outline-primary'}`;
+                        btn.onclick = () => showModal(labs[i]);
+                        labList2.appendChild(btn);
+                    }
+                });
+        }
+
+        loadLabs(); // Carica i laboratori all'avvio
+
+        socket.on('lab_status', (lab) => {
+            loadLabs(); // Ricarica i laboratori quando si riceve un aggiornamento
+        });
+
+        // Funzione per generare un ID utente unico
+        function generateUserId() {
+            return 'user-' + Date.now();
+        }
+
+        // Variabile globale per l'ID utente
+        let currentUserId;
+
+        // Controlla se esiste già un ID utente nel localStorage
+        if (localStorage.getItem('userId')) {
+            currentUserId = localStorage.getItem('userId'); // Recupera l'ID utente esistente
+        } else {
+            currentUserId = generateUserId(); // Genera un nuovo ID utente
+            localStorage.setItem('userId', currentUserId); // Salva l'ID utente nel localStorage
+        }
+
+        function occupyLab(labName) {
+            fetch('/api/labs/occupy', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ nome: labName, utente: currentUserId}) // Usa l'ID utente memorizzato
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Errore nell\'occupazione del laboratorio');
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Laboratorio occupato:', data);
+            })
+            .catch(error => {
+                console.error('Errore:', error);
+                alert('Errore nell\'occupazione del laboratorio');
+            });
+        }
+
+        function releaseLab(labName) {
+            // Verifica se il laboratorio è occupato e da chi
+            fetch('/api/labs')
+                .then(response => response.json())
+                .then(labs => {
+                    const lab = labs.find(l => l.nome === labName);
+                    if (!lab) {
+                        console.error('Laboratorio non trovato');
+                        return;
+                    }
+
+                    if (!lab.stato) {
+                        console.log('Il laboratorio è già libero.');
+                        alert('Il laboratorio è già libero.'); // Messaggio per l'utente
+                        return;
+                    }
+
+                    // Se il laboratorio è occupato, controlla se l'utente è autorizzato a liberarlo
+                    if (lab.utente !== currentUserId) {
+                        console.log('Non sei autorizzato a liberare questo laboratorio.');
+                        alert('Non sei autorizzato a liberare questo laboratorio.'); // Messaggio per l'utente
+                        return;
+                    }
+
+                    // Procedi a liberare il laboratorio
+                    fetch('/api/labs/release', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ nome: labName, utente: currentUserId })
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Errore nella liberazione del laboratorio');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log('Laboratorio liberato:', data);
+                    })
+                    .catch(error => {
+                        console.error('Errore:', error);
+                    });
+                })
+                .catch(error => {
+                    console.error('Errore durante il recupero dei laboratori:', error);
+                });
+        }
+
+
+        function showModal(lab) {
+            currentLab = lab.nome;
+            const modalBody = document.getElementById('modal-body');
+            const ora_laboratorio = new Date(lab.ora);
+            const dataFormattata = `${String(ora_laboratorio.getHours()).padStart(2, '0')}:` +
+                                `${String(ora_laboratorio.getMinutes()).padStart(2, '0')}`;
+                                
+            modalBody.innerHTML = `
+                <h5>${lab.nome.toUpperCase()}</h5>
+                <p>Stato: ${lab.stato ? 'Occupato' : 'Libero'}</p>
+                <p>Ora: ${dataFormattata ? dataFormattata : 'Nessuno'}</p>
+            `;
+            const modal = new bootstrap.Modal(document.getElementById('modal'));
+            modal.show();
+        }
+
+        loadLabs();
+        socket.on('lab_status', () => loadLabs());
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+</body>
+</html>

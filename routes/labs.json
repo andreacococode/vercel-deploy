@@ -1,0 +1,68 @@
+[
+  {
+    "nome": "linguistico",
+    "utente": null,
+    "stato": false,
+    "ora": "2024-11-11T09:48:22.698Z"
+  },
+  {
+    "nome": "office",
+    "utente": null,
+    "stato": false,
+    "ora": "2024-10-30T10:25:29.963Z"
+  },
+  {
+    "nome": "sistemi",
+    "utente": null,
+    "stato": false,
+    "ora": "2024-10-29T17:56:25.070Z"
+  },
+  {
+    "nome": "jolly",
+    "utente": null,
+    "stato": false,
+    "ora": "2024-10-29T18:01:03.284Z"
+  },
+  {
+    "nome": "aula_magna",
+    "utente": null,
+    "stato": false,
+    "ora": "2024-10-29T19:03:11.406Z"
+  },
+  {
+    "nome": "biologia",
+    "utente": null,
+    "stato": false,
+    "ora": "2024-10-29T18:01:03.840Z"
+  },
+  {
+    "nome": "CAD",
+    "utente": null,
+    "stato": false,
+    "ora": "2024-10-29T17:56:23.798Z"
+  },
+  {
+    "nome": "sun",
+    "utente": null,
+    "stato": false,
+    "ora": "2024-10-30T10:43:36.964Z"
+  },
+  {
+    "nome": "tepe",
+    "utente": null,
+    "stato": false,
+    "ora": "2024-10-29T17:56:23.231Z"
+  },
+  {
+    "nome": "elettronica",
+    "utente": null,
+    "stato": false,
+    "ora": "2024-10-30T08:59:30.912Z"
+  },
+  {
+    "nome": "chimica",
+    "utente": null,
+    "stato": false,
+    "ora": "2024-10-29T17:56:22.679Z"
+  }
+]
